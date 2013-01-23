@@ -87,6 +87,7 @@
     <Reference Include="System.Windows.Browser" />
     <Reference Include="Telerik.Windows.Controls, Version=2012.1.326.1050, Culture=neutral, PublicKeyToken=5803cfa389c90ce7, processorArchitecture=MSIL" />
     <Reference Include="Telerik.Windows.Controls.GridView, Version=2012.1.326.1050, Culture=neutral, PublicKeyToken=5803cfa389c90ce7, processorArchitecture=MSIL" />
+    <Reference Include="Telerik.Windows.Controls.Input, Version=2012.1.326.1050, Culture=neutral, PublicKeyToken=5803cfa389c90ce7, processorArchitecture=MSIL" />
     <Reference Include="Telerik.Windows.Data, Version=2012.1.326.1050, Culture=neutral, PublicKeyToken=5803cfa389c90ce7, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
@@ -138,6 +139,7 @@
   <ItemGroup>
     <Content Include="Libs\Telerik.Windows.Controls.dll" />
     <Content Include="Libs\Telerik.Windows.Controls.GridView.dll" />
+    <Content Include="Libs\Telerik.Windows.Controls.Input.dll" />
     <Content Include="Libs\Telerik.Windows.Data.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Silverlight\$(SilverlightVersion)\Microsoft.Silverlight.CSharp.targets" />

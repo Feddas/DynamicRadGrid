@@ -23,9 +23,7 @@ namespace BindingToDynamicTypes
         string dataTemplateXaml = @"
 <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
             <StackPanel Orientation=""Horizontal"">
-                <TextBlock Text='{Binding Value}' />
-                <TextBlock Text='{Binding Status}' />
-                <TextBlock Text='{Binding DoubleNullable}' />
+                <TextBlock Text='{Binding DisplayValue}' Foreground='{Binding Status}' />
             </StackPanel>
 </DataTemplate>";
 
@@ -37,9 +35,8 @@ namespace BindingToDynamicTypes
 
         void DynGrid_Loaded(object sender, RoutedEventArgs e)
         {
-            //CodeBehindHook.Columns.Add(createBoundColumn("Name"));
             CodeBehindHook.Columns.Add(new GridViewDataColumn() { DataMemberBinding = new Binding("Name") });
-            CodeBehindHook.Columns.Add(createBoundColumn());//"[SingleMetric].Value"));
+            CodeBehindHook.Columns.Add(createBoundColumn());
             CodeBehindHook.ItemsSource = buildDynamicType();
         }
 
@@ -53,7 +50,7 @@ namespace BindingToDynamicTypes
                 dynamic row = new RadDataRow();
                 row["Name"] = name;
                 row["SingleMetric"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric;
-                row["SingleMetricFilter"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric.DoubleNullable ?? 0; // created explicitly for the filter
+                row["SingleMetricFilter"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric.DoubleNullable; // ?? 0; // created explicitly for the filter
                 row["DisplayValueB"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric.DisplayValue;
 
                 metrics.Add(row);
@@ -65,9 +62,10 @@ namespace BindingToDynamicTypes
         {
             List<Customer> customers = new List<Customer>();
 
-            customers.Add(new Customer("Blizzard", 3, "Red", 1.3));
-            customers.Add(new Customer("ArenaNet", 8, "Black", 2.8));
-            customers.Add(new Customer("Rovio", 6, "Green", 3.6));
+            customers.Add(new Customer("Id", "Green", 0.0));
+            customers.Add(new Customer("Blizzard", "Red", .86996));
+            customers.Add(new Customer("ArenaNet", "Black", 1));
+            customers.Add(new Customer("Rovio", "Green", null));
 
             return customers;
         }
