@@ -39,7 +39,7 @@ namespace BindingToDynamicTypes
             }
             else
             {
-                element.DataContext = new Metric() { Status = "none", DoubleNullable = 0.42 };
+                element.DataContext = new Metric("none", null, "Black");
             }
             return element;
         }

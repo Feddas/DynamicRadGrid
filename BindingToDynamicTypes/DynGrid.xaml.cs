@@ -12,6 +12,7 @@ using System.Windows.Shapes;
 using Telerik.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Markup;
+using System.Collections.ObjectModel;
 
 namespace BindingToDynamicTypes
 {
@@ -23,10 +24,11 @@ namespace BindingToDynamicTypes
         string dataTemplateXaml = @"
 <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
             <StackPanel Orientation=""Horizontal"">
-                <TextBlock Text='{Binding DisplayValue}' Foreground='{Binding Status}' />
+                <TextBlock Text='{Binding DisplayValue}' Foreground='{Binding DataStateColor}' />
             </StackPanel>
 </DataTemplate>";
 
+        List<string> colName = new List<string> { "Sales", "Share" };
         public DynGrid()
         {
             InitializeComponent();
@@ -36,24 +38,32 @@ namespace BindingToDynamicTypes
         void DynGrid_Loaded(object sender, RoutedEventArgs e)
         {
             CodeBehindHook.Columns.Add(new GridViewDataColumn() { DataMemberBinding = new Binding("Name") });
-            CodeBehindHook.Columns.Add(createBoundColumn());
+            CodeBehindHook.Columns.Add(createBoundColumn(colName[0]));
+            CodeBehindHook.Columns.Add(createBoundColumn(colName[1]));
             CodeBehindHook.ItemsSource = buildDynamicType();
         }
 
-        private List<dynamic> buildDynamicType()
+        private ObservableCollection<dynamic> buildDynamicType()
         {
             List<Customer> stronglyTypedCustomers = buildStrongyTyped();
-            var names = stronglyTypedCustomers.Select(e => e.Name).Distinct();
-            dynamic metrics = new List<dynamic>();
-            foreach (var name in names)
+            var rowTitles = stronglyTypedCustomers.Select(e => e.Name).Distinct();
+            string metricIdentifier;
+            dynamic metrics = new ObservableCollection<dynamic>();
+            foreach (var title in rowTitles)
             {
-                dynamic row = new RadDataRow();
-                row["Name"] = name;
-                row["SingleMetric"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric;
-                row["SingleMetricFilter"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric.DoubleNullable; // ?? 0; // created explicitly for the filter
-                row["DisplayValueB"] = stronglyTypedCustomers.Where(e => e.Name == name).First().SingleMetric.DisplayValue;
+                dynamic currentRow = new RadDataRow();
+                currentRow["Name"] = title;
 
-                metrics.Add(row);
+                Customer rowContents = stronglyTypedCustomers.Where(e => e.Name == title).First();
+                foreach (var metric in rowContents.Metrics)
+                {
+                    metricIdentifier = metric.MetricName;
+                    currentRow[metricIdentifier] = metric;
+                    currentRow["Filter" + metricIdentifier] = (double)(metric.DoubleNullable ?? 0); // created explicitly for the filter
+                    currentRow["Display" + metricIdentifier] = metric.DisplayValue;
+                }
+
+                metrics.Add(currentRow);
             }
             return metrics;
         }
@@ -62,17 +72,25 @@ namespace BindingToDynamicTypes
         {
             List<Customer> customers = new List<Customer>();
 
-            customers.Add(new Customer("Id", "Green", 0.0));
-            customers.Add(new Customer("Blizzard", "Red", .86996));
-            customers.Add(new Customer("ArenaNet", "Black", 1));
-            customers.Add(new Customer("Rovio", "Green", null));
+            //Each column needs to have a value, otherwise every row beneath can't be filtered on that column
+            customers.Add(new Customer("Id", new List<Metric>() { 
+                new Metric(colName[0], 0.0, "Green"),
+            }));
+            customers.Add(new Customer("Blizzard", new List<Metric>() {
+                new Metric(colName[1], 1, "Green")
+            }));
+            customers.Add(new Customer("ArenaNet", new List<Metric>() {
+                new Metric(colName[0], null, "Red"), new Metric(colName[1], 1, "Black"),
+            }));
+            customers.Add(new Customer("Rovio", new List<Metric>() {
+                new Metric(colName[0], .86996, "Orange"), new Metric(colName[1], 0.0, "Red")
+            }));
 
             return customers;
         }
 
-        private CellContextColumn createBoundColumn()
+        private CellContextColumn createBoundColumn(string metricIdentifier)
         {
-            string metricIdentifier = "SingleMetric";
             CellContextColumn column = new CellContextColumn(cell => metricIdentifier);
 
             //bind.Converter = new DebugConverter();
@@ -81,10 +99,10 @@ namespace BindingToDynamicTypes
             //column.FilterMemberPath = "SingleMetric"; // see the tostring override in metric class. whatever you return from tostring becomes the values for the filter.                
             //column.ShowDistinctFilters = true;
 
-            column.FilterMemberPath = "DisplayValueB";
+            column.FilterMemberPath = "Display" + metricIdentifier;
             // when you want to filter of specific metric object value such as int
             column.FilterMemberType = typeof(double);
-            column.FilterMemberPath = "SingleMetricFilter";
+            column.FilterMemberPath = "Filter" + metricIdentifier;
             column.ShowDistinctFilters = true;
 
             #region [ not necessary, just trying to repo secondary filter bug ]
@@ -96,7 +114,7 @@ namespace BindingToDynamicTypes
                     }
             };
 
-            column.Header = "Metric";
+            column.Header = metricIdentifier;
             column.HeaderCellStyle = coloredHeader;
             column.UniqueName = metricIdentifier;
             column.IsReadOnly = true;
