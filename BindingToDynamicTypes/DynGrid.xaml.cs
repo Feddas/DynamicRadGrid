@@ -23,9 +23,9 @@ namespace BindingToDynamicTypes
         /// </summary>
         string dataTemplateXaml = @"
 <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
-            <StackPanel Orientation=""Horizontal"">
-                <TextBlock Text='{Binding DisplayValue}' Foreground='{Binding DataStateColor}' />
-            </StackPanel>
+    <StackPanel Orientation=""Horizontal"">
+        <TextBlock Text='{Binding DisplayValue}' Foreground='{Binding DataStateColor}' />
+    </StackPanel>
 </DataTemplate>";
 
         List<string> colName = new List<string> { "Sales", "Share" };
@@ -59,8 +59,7 @@ namespace BindingToDynamicTypes
                 {
                     metricIdentifier = metric.MetricName;
                     currentRow[metricIdentifier] = metric;
-                    currentRow["Filter" + metricIdentifier] = (double)(metric.DoubleNullable ?? 0); // created explicitly for the filter
-                    currentRow["Display" + metricIdentifier] = metric.DisplayValue;
+                    currentRow["Filter" + metricIdentifier] = metric.FilterValue;
                 }
 
                 metrics.Add(currentRow);
@@ -73,17 +72,18 @@ namespace BindingToDynamicTypes
             List<Customer> customers = new List<Customer>();
 
             //Each column needs to have a value, otherwise every row beneath can't be filtered on that column
+            //The example data below shows the first column working, but the second column failing
             customers.Add(new Customer("Id", new List<Metric>() { 
                 new Metric(colName[0], 0.0, "Green"),
             }));
             customers.Add(new Customer("Blizzard", new List<Metric>() {
-                new Metric(colName[1], 1, "Green")
+                new Metric(colName[0], 1, "Green")
             }));
             customers.Add(new Customer("ArenaNet", new List<Metric>() {
                 new Metric(colName[0], null, "Red"), new Metric(colName[1], 1, "Black"),
             }));
             customers.Add(new Customer("Rovio", new List<Metric>() {
-                new Metric(colName[0], .86996, "Orange"), new Metric(colName[1], 0.0, "Red")
+                new Metric(colName[0], .8699657, "Orange"), new Metric(colName[1], 0.0, "Red")
             }));
 
             return customers;
@@ -95,31 +95,10 @@ namespace BindingToDynamicTypes
 
             //bind.Converter = new DebugConverter();
 
-            // when you want to filter on formatted value
-            //column.FilterMemberPath = "SingleMetric"; // see the tostring override in metric class. whatever you return from tostring becomes the values for the filter.                
-            //column.ShowDistinctFilters = true;
-
-            column.FilterMemberPath = "Display" + metricIdentifier;
             // when you want to filter of specific metric object value such as int
-            column.FilterMemberType = typeof(double);
+            column.FilterMemberType = typeof(decimal);
             column.FilterMemberPath = "Filter" + metricIdentifier;
             column.ShowDistinctFilters = true;
-
-            #region [ not necessary, just trying to repo secondary filter bug ]
-            Style coloredHeader = new Style(typeof(Telerik.Windows.Controls.GridView.GridViewHeaderCell))
-            {
-                Setters = {
-                        new Setter(Telerik.Windows.Controls.GridView.GridViewHeaderCell.FontWeightProperty, FontWeights.Light),
-                        new Setter(Telerik.Windows.Controls.GridView.GridViewHeaderCell.BackgroundProperty, new SolidColorBrush(Colors.Gray)),
-                    }
-            };
-
-            column.Header = metricIdentifier;
-            column.HeaderCellStyle = coloredHeader;
-            column.UniqueName = metricIdentifier;
-            column.IsReadOnly = true;
-            column.Width = 142;
-            #endregion [ not necessary, just trying to repo secondary filter bug ]
 
             DataTemplate dt = XamlReader.Load(dataTemplateXaml) as DataTemplate;
             column.CellTemplate = dt;
