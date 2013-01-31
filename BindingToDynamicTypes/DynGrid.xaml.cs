@@ -33,6 +33,7 @@ namespace BindingToDynamicTypes
         {
             InitializeComponent();
             this.Loaded += new RoutedEventHandler(DynGrid_Loaded);
+            CodeBehindHook.DistinctValuesLoading += new EventHandler<Telerik.Windows.Controls.GridView.GridViewDistinctValuesLoadingEventArgs>(CodeBehindHook_DistinctValuesLoading);
         }
 
         void DynGrid_Loaded(object sender, RoutedEventArgs e)
@@ -41,6 +42,12 @@ namespace BindingToDynamicTypes
             CodeBehindHook.Columns.Add(createBoundColumn(colName[0]));
             CodeBehindHook.Columns.Add(createBoundColumn(colName[1]));
             CodeBehindHook.ItemsSource = buildDynamicType();
+        }
+
+        void CodeBehindHook_DistinctValuesLoading(object sender, Telerik.Windows.Controls.GridView.GridViewDistinctValuesLoadingEventArgs e)
+        {
+            var filterItems = ((Telerik.Windows.Controls.RadGridView)sender).GetDistinctValues(e.Column, false);
+            e.ItemsSource = filterItems.Cast<decimal?>().Where(itm => itm.HasValue);
         }
 
         private ObservableCollection<dynamic> buildDynamicType()
@@ -77,13 +84,13 @@ namespace BindingToDynamicTypes
                 new Metric(colName[0], 0.0, "Green"),
             }));
             customers.Add(new Customer("Blizzard", new List<Metric>() {
-                new Metric(colName[0], 1, "Green")
+                new Metric(colName[0], 1, "Green"), new Metric(colName[1], 2, "Green"),
             }));
             customers.Add(new Customer("ArenaNet", new List<Metric>() {
                 new Metric(colName[0], null, "Red"), new Metric(colName[1], 1, "Black"),
             }));
             customers.Add(new Customer("Rovio", new List<Metric>() {
-                new Metric(colName[0], .8699657, "Orange"), new Metric(colName[1], 0.0, "Red")
+                new Metric(colName[0], .8699657, "Orange"), new Metric(colName[1], 0, "Red"),
             }));
 
             return customers;
@@ -92,11 +99,12 @@ namespace BindingToDynamicTypes
         private CellContextColumn createBoundColumn(string metricIdentifier)
         {
             CellContextColumn column = new CellContextColumn(cell => metricIdentifier);
+            column.Header = metricIdentifier;
 
             //bind.Converter = new DebugConverter();
 
             // when you want to filter of specific metric object value such as int
-            column.FilterMemberType = typeof(decimal);
+            column.FilterMemberType = typeof(decimal?);
             column.FilterMemberPath = "Filter" + metricIdentifier;
             column.ShowDistinctFilters = true;
 

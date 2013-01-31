@@ -30,7 +30,7 @@ namespace BindingToDynamicTypes
         public double? DoubleNullable { get; set; }
         public string DataStateColor { get; set; }
         public string DisplayValue { get; set; }
-        public decimal FilterValue { get; set; }
+        public decimal? FilterValue { get; set; }
 
         public Metric(string metricName, double? dbl, string dataStateColor)
         {
@@ -49,7 +49,7 @@ namespace BindingToDynamicTypes
         /// <summary>
         /// strips non-digits from a string then converts it to a decimal.
         /// </summary>
-        private decimal parseStringDigits(string str)
+        private decimal? parseStringDigits(string str)
         {
             char[] validChars = str.Where(c => (char.IsDigit(c) || c == '.')).ToArray();
             str = new string(validChars);
@@ -58,7 +58,7 @@ namespace BindingToDynamicTypes
             if (decimal.TryParse(str, out output))
                 return output;
             else
-                return -1;
+                return null;
         }
     }
 }
